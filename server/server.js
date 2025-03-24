@@ -19,6 +19,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const { connectDB } = require("./config/db");
+const Message = require("./models/Message");
 
 // Initialize express
 const app = express();
@@ -309,24 +310,68 @@ io.on("connection", (socket) => {
 
     // Send read receipt to sender for each message
     if (senderId && Array.isArray(messageIds)) {
-      messageIds.forEach((messageId) => {
-        socket.to(senderId).emit("message:read", {
-          messageId,
-          status: "read",
-          readBy: userId,
-          timestamp: Date.now(),
+      // Get all sockets for the sender
+      const senderSockets = Array.from(io.sockets.sockets.values()).filter(
+        (s) => s.userId === senderId
+      );
+
+      // Send to all sender's sockets to ensure delivery
+      senderSockets.forEach((senderSocket) => {
+        messageIds.forEach((messageId) => {
+          console.log(
+            `Sending read receipt for message ${messageId} to user ${senderId}`
+          );
+          senderSocket.emit("message:read", {
+            messageId,
+            status: "read",
+            readBy: userId,
+            timestamp: Date.now(),
+          });
         });
       });
+
+      // If no sender sockets found, store the read receipt for when they reconnect
+      if (senderSockets.length === 0) {
+        console.log(
+          `No active sockets found for sender ${senderId}, storing read receipt`
+        );
+        // Store read receipt in database for offline users
+        Message.updateMany(
+          { _id: { $in: messageIds } },
+          { $set: { read: true, readBy: userId, readAt: Date.now() } }
+        ).catch((err) =>
+          console.error("Error updating message read status:", err)
+        );
+      }
     } else if (senderId) {
       // Backward compatibility for single messageId
       const messageId = data.messageId;
       if (messageId) {
-        socket.to(senderId).emit("message:read", {
-          messageId,
-          status: "read",
-          readBy: userId,
-          timestamp: Date.now(),
+        const senderSockets = Array.from(io.sockets.sockets.values()).filter(
+          (s) => s.userId === senderId
+        );
+
+        senderSockets.forEach((senderSocket) => {
+          console.log(
+            `Sending read receipt for message ${messageId} to user ${senderId}`
+          );
+          senderSocket.emit("message:read", {
+            messageId,
+            status: "read",
+            readBy: userId,
+            timestamp: Date.now(),
+          });
         });
+
+        // If no sender sockets found, store the read receipt
+        if (senderSockets.length === 0) {
+          Message.updateOne(
+            { _id: messageId },
+            { $set: { read: true, readBy: userId, readAt: Date.now() } }
+          ).catch((err) =>
+            console.error("Error updating message read status:", err)
+          );
+        }
       }
     }
   });

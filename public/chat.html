@@ -145,8 +145,6 @@
         <div class="messages" id="messages-container"></div>
 
         <div class="message-input glass-card">
-          <div class="emoji-picker" id="emoji-picker"></div>
-          <button id="emoji-btn" class="btn btn-small">😊</button>
           <textarea
             id="message-input"
             placeholder="Type a message..."
@@ -158,59 +156,6 @@
     </div>
 
     <!-- Keyboard shortcuts help modal -->
-    <div class="shortcuts-help">
-      <div class="shortcuts-header">
-        <h2>Keyboard Shortcuts</h2>
-        <button class="close-shortcuts">×</button>
-      </div>
-      <div class="shortcuts-content">
-        <div class="shortcut-group">
-          <h3>Navigation</h3>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Alt</kbd> + <kbd>1</kbd></div>
-            <div class="shortcut-desc">Switch to Friends tab</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Alt</kbd> + <kbd>2</kbd></div>
-            <div class="shortcut-desc">Switch to Requests tab</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Alt</kbd> + <kbd>3</kbd></div>
-            <div class="shortcut-desc">Switch to Search tab</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Alt</kbd> + <kbd>F</kbd></div>
-            <div class="shortcut-desc">Focus search input</div>
-          </div>
-        </div>
-        <div class="shortcut-group">
-          <h3>Messaging</h3>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></div>
-            <div class="shortcut-desc">Send message</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Esc</kbd></div>
-            <div class="shortcut-desc">Blur message input</div>
-          </div>
-        </div>
-        <div class="shortcut-group">
-          <h3>Settings</h3>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>/</kbd></div>
-            <div class="shortcut-desc">Open settings panel</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>?</kbd></div>
-            <div class="shortcut-desc">Show keyboard shortcuts</div>
-          </div>
-          <div class="shortcut-item">
-            <div class="shortcut-keys"><kbd>Esc</kbd></div>
-            <div class="shortcut-desc">Close dialogs</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <script src="js/chat.js"></script>
     <script src="js/friends.js"></script>
@@ -267,115 +212,10 @@
         });
 
         // Initialize emoji picker
-        const emojiBtn = document.getElementById("emoji-btn");
-        const emojiPicker = document.getElementById("emoji-picker");
-        const messageInput = document.getElementById("message-input");
-
-        // Common emojis
-        const emojis = [
-          "😊",
-          "😂",
-          "❤️",
-          "👍",
-          "🙌",
-          "🎉",
-          "🔥",
-          "👏",
-          "🤔",
-          "😍",
-          "🥰",
-          "😢",
-          "😭",
-          "😎",
-          "🤣",
-          "🙏",
-          "✅",
-          "❌",
-          "⭐",
-          "🌟",
-          "💯",
-          "👋",
-          "🤝",
-          "👀",
-          "💪",
-          "🤦",
-          "🤷",
-          "👌",
-          "👊",
-          "💕",
-          "💓",
-          "💖",
-          "💙",
-        ];
-
-        // Populate emoji picker
-        if (!emojiPicker.hasChildNodes()) {
-          emojis.forEach((emoji) => {
-            const emojiButton = document.createElement("button");
-            emojiButton.textContent = emoji;
-            emojiButton.addEventListener("click", (e) => {
-              e.stopPropagation();
-              // Get cursor position
-              const cursorPos = messageInput.selectionStart;
-              const textBefore = messageInput.value.substring(0, cursorPos);
-              const textAfter = messageInput.value.substring(cursorPos);
-
-              // Insert emoji at cursor position
-              messageInput.value = textBefore + emoji + textAfter;
-
-              // Move cursor position after the inserted emoji
-              messageInput.selectionStart = cursorPos + emoji.length;
-              messageInput.selectionEnd = cursorPos + emoji.length;
-
-              // Keep focus on the input
-              messageInput.focus();
-
-              // Don't automatically close the picker to allow multiple emoji selection
-            });
-            emojiPicker.appendChild(emojiButton);
-          });
-        }
 
         // Toggle emoji picker
-        emojiBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const isActive = emojiPicker.classList.contains("active");
-
-          if (isActive) {
-            emojiPicker.classList.remove("active");
-            modalBackdrop.classList.remove("active");
-          } else {
-            emojiPicker.classList.add("active");
-            modalBackdrop.classList.add("active");
-          }
-        });
 
         // Close emoji picker when clicking outside
-        document.addEventListener("click", (e) => {
-          if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-            emojiPicker.classList.remove("active");
-            if (
-              !document.querySelector(".settings-panel.active") &&
-              !document.querySelector(".shortcuts-help.active")
-            ) {
-              modalBackdrop.classList.remove("active");
-            }
-          }
-        });
-
-        // Handle keyboard shortcuts
-        document.addEventListener("keydown", function (e) {
-          // Escape key closes modals
-          if (e.key === "Escape") {
-            emojiPicker.classList.remove("active");
-            if (
-              !document.querySelector(".settings-panel.active") &&
-              !document.querySelector(".shortcuts-help.active")
-            ) {
-              modalBackdrop.classList.remove("active");
-            }
-          }
-        });
 
         // Keyboard shortcuts help modal
         const shortcutsHelp = document.querySelector(".shortcuts-help");
@@ -398,8 +238,7 @@
 
         // Also close shortcuts help when backdrop is clicked
         modalBackdrop.addEventListener("click", function () {
-          shortcutsHelp.classList.remove("active");
-          emojiPicker.classList.remove("active");
+       
           const settingsPanel = document.querySelector(".settings-panel");
           if (settingsPanel && settingsPanel.classList.contains("active")) {
             settingsPanel.classList.remove("active");

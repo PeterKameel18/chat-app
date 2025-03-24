@@ -139,6 +139,27 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           appendMessage(message, false);
 
+          // Send read receipt immediately if we're actively viewing the chat
+          if (
+            document.visibilityState === "visible" &&
+            socket &&
+            socket.connected
+          ) {
+            const messageId = message.id || message._id;
+            socket.emit("message:read", {
+              senderId: message.sender._id || message.sender,
+              messageIds: [messageId],
+            });
+
+            // Mark as read locally
+            const messageElement = document.querySelector(
+              `.message[data-id="${messageId}"]`
+            );
+            if (messageElement) {
+              messageElement.setAttribute("data-read", "true");
+            }
+          }
+
           // Play notification sound if the message is from someone else
           if (message.sender !== userId && message.sender._id !== userId) {
             playNotificationSound();
@@ -171,6 +192,13 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Message read receipt:", data);
         if (data.messageId) {
           updateMessageStatus(data.messageId, "read");
+          // Also update the message element's data-read attribute
+          const messageElement = document.querySelector(
+            `.message[data-id="${data.messageId}"]`
+          );
+          if (messageElement) {
+            messageElement.setAttribute("data-read", "true");
+          }
         }
       });
 
@@ -467,9 +495,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // Store the status in our map
       messageStatuses.set(messageId, status);
 
+      // Update the status display immediately
       if (status === "read") {
         statusElement.textContent = "Read";
         statusElement.setAttribute("data-status", "read");
+        messageElement.setAttribute("data-read", "true");
       } else if (status === "delivered") {
         statusElement.textContent = "Delivered";
         statusElement.setAttribute("data-status", "delivered");
@@ -754,6 +784,17 @@ document.addEventListener("DOMContentLoaded", () => {
           socket.emit("message:read", {
             senderId: user.id,
             messageIds: unreadMessageIds,
+          });
+
+          // Mark messages as read locally
+          unreadMessageIds.forEach((messageId) => {
+            const messageElement = document.querySelector(
+              `.message[data-id="${messageId}"]`
+            );
+            if (messageElement) {
+              messageElement.setAttribute("data-read", "true");
+              updateMessageStatus(messageId, "read");
+            }
           });
         }
       }
