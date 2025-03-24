@@ -127,6 +127,68 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
+      // Handle incoming messages
+      socket.on("message:new", (message) => {
+        console.log("New message received:", message);
+
+        // Only append the message if we're currently chatting with the sender
+        if (
+          currentChatUser &&
+          (currentChatUser.id === message.sender ||
+            currentChatUser.id === message.sender._id)
+        ) {
+          appendMessage(message, false);
+
+          // Play notification sound if the message is from someone else
+          if (message.sender !== userId && message.sender._id !== userId) {
+            playNotificationSound();
+          }
+        } else {
+          // If we're not chatting with the sender, increment unread count
+          if (message.sender !== userId && message.sender._id !== userId) {
+            const senderId = message.sender._id || message.sender;
+            unreadMessages[senderId] = (unreadMessages[senderId] || 0) + 1;
+
+            // Update the friends list to show the new unread count
+            if (
+              window.friendsFunctions &&
+              window.friendsFunctions.loadFriendsList
+            ) {
+              window.friendsFunctions.loadFriendsList();
+            }
+          }
+        }
+      });
+
+      // Handle message status updates
+      socket.on("message:status", (data) => {
+        console.log("Message status update:", data);
+        updateMessageStatus(data.messageId, data.status);
+      });
+
+      // Handle read receipts
+      socket.on("message:read", (data) => {
+        console.log("Message read receipt:", data);
+        if (data.messageId) {
+          updateMessageStatus(data.messageId, "read");
+        }
+      });
+
+      // Handle typing indicators
+      socket.on("user:typing", (data) => {
+        console.log("Typing indicator:", data);
+        if (
+          currentChatUser &&
+          (currentChatUser.id === data.userId ||
+            currentChatUser.id === data.userId._id)
+        ) {
+          const typingIndicator = document.querySelector(".typing-indicator");
+          if (typingIndicator) {
+            typingIndicator.classList.toggle("active", data.isTyping);
+          }
+        }
+      });
+
       // Handle user status updates
       socket.on("user:status", (data) => {
         console.log("Single status update received:", data);
@@ -754,17 +816,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }</div>`;
     }
 
-    // Create reaction bar
-    const reactionBarHTML = `
-      <div class="reaction-bar">
-        <span class="reaction" data-emoji="👍">👍</span>
-        <span class="reaction" data-emoji="❤️">❤️</span>
-        <span class="reaction" data-emoji="😂">😂</span>
-        <span class="reaction" data-emoji="😮">😮</span>
-        <span class="reaction" data-emoji="👏">👏</span>
-      </div>
-    `;
-
     // Make sure the content is set safely
     const contentElement = document.createElement("div");
     contentElement.classList.add("content");
@@ -775,7 +826,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tempContainer.innerHTML = `
       <div class="time">${time}</div>
       ${statusHTML}
-      ${reactionBarHTML}
     `;
 
     // Add the elements to the message
@@ -786,14 +836,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     messagesContainer.appendChild(messageElement);
-
-    // Add event listeners to reactions
-    const reactions = messageElement.querySelectorAll(".reaction");
-    reactions.forEach((reaction) => {
-      reaction.addEventListener("click", () => {
-        reaction.classList.toggle("active");
-      });
-    });
 
     // Scroll to new message
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
