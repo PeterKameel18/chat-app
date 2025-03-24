@@ -330,7 +330,6 @@ textarea {
   font-style: italic;
   color: var(--typing-color);
   font-size: 14px;
-  transition: color 0.3s ease, opacity 0.3s ease;
   opacity: 0;
   height: 20px;
   margin-right: 10px;
@@ -341,11 +340,6 @@ textarea {
   animation: fadeIn 0.3s ease-in;
 }
 
-.typing-indicator .dots {
-  display: flex;
-  margin-left: 8px;
-}
-
 .typing-indicator .dot {
   width: 6px;
   height: 6px;
@@ -353,6 +347,11 @@ textarea {
   background-color: var(--typing-color);
   margin-right: 3px;
   animation: typingAnimation 1.5s infinite ease-in-out;
+}
+
+.typing-indicator .dots {
+  display: flex;
+  margin-left: 8px;
 }
 
 .typing-indicator .dot:nth-child(2) {

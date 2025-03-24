@@ -500,7 +500,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle typing indicator with WebSockets
     if (socket && socket.connected && currentChatUser) {
-      // Only send if the input has content and typing indicators are supported
       if (messageInput.value.trim().length > 0) {
         // Send typing indicator
         socket.emit("user:typing", {

@@ -295,7 +295,6 @@ io.on("connection", (socket) => {
         isTyping,
       });
     }
-
     // Update last activity
     userLastActivity.set(userId, Date.now());
   });
